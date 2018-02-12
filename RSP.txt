@@ -1,0 +1,331 @@
+with(combinat):
+Help:=proc()
+if args=NULL then
+print(`NuPaths(run,rise,targetx,targety)`):
+print(`MEQFP(Vars,Eqs,highestPower,x)`):
+print(`SlopeToVarsEQ(run,rise,t,D)`):
+print(`NuPathsND(slopePoint,targetPoint)`):
+print(`Grossman(a,b,n)`):
+print(`Partition(n)`):
+print(`ApproxCoeff(slope,n)`):
+print(`ApproxExpND(slopepoint,n0,n1)`):
+print(`NumWinningk(run,rise,n,k)`):
+print(`Call Help on the name of one of these function names`):
+print(`to get a more specific description and example(s)`):
+
+elif (args[1]=Partition) then
+print(`Partition(n) returns the set of lists L of nonnegative`):
+print(`integers with no trailing zeroes so that sum(i*L[i],i=1..nops(L))=n`):
+print(`For example, WeightedPartition(3) = {[3], [1, 1], [0, 0, 1]}`):
+print(`meaning you either have three ones, a one and a two, or one three`):
+
+
+elif (args[1]=NuPathsND) then
+print(`This function takes two lists of the same length, say n`):
+print(`it then returns the number of paths in the n dimensional lattice`):
+print(`running from the origin to the point targetpoint`):
+print(`so that each point in the path staisfies for each 0<i<n,`):
+print(`slopepoint[i]*x[i]<slopepoint[i+1]*x[i+1]`):
+print(`for example calling [seq(NuPathsND([1,1,1],[i,i,i]),i=1..5)]`):
+print(`returns 1, 5, 42, 462, 6006`):
+print(`which are the first few terms of A005789 which counts what we want`):
+
+elif (args[1]=Grossman) then
+print(`This uses Grossman's formula to compute the number of paths from`):
+print(`(0,0) to (an,bn) staying below the diagonal line`):
+print(`for example, calling Grossman(a,b,n) should return the same thing as`):
+print(`NuPaths(a,b,a*n,b*n)`):
+
+elif (args[1]=ListPaths) then
+print(`This function gives the number of lattice paths travelling`):
+print(`from origin to the point (targetx,targety) that are allowed`):
+print(`to touch but not go above the line y=(rise/run)x`):
+print(`running [seq(ListPaths(i,i,i,i),i=1..10)] will output catalan numbers`):
+print(`or, to get number of paths below the line of slope 3/2,`):
+print(`you could run [seq(ListPaths(3,2,i,floor(3/2*i)),i=1..10)]`):
+
+elif (args[1]=MEQFP) then
+print(`Vars are the functions in the the functional equations, Eqs`):
+print(`It will iteratively find the fixed point solution`):
+print(`it stops once it has found all terms up to degree highestPower in x`):
+print(`For example MEQFP({V1,V2},{V1=(1+t)*V2,V2 = 1+t*V2^2},4,t)`):
+print(`returns {V1 = 19*t^4+7*t^3+3*t^2+2*t+1, V2 = 14*t^4+5*t^3+2*t^2+t+1}`):
+print(`as expected since it's easy that V2 has solution Catalan numbers`):
+print(`and V2 is, as expected the sums of consective terms in the V2 seq.`):
+
+elif (args[1]=SlopetoVarsEQ) then
+print(`gives a set of of names of functions in t and functional equations.`):
+print(`D will give the generating function in the variable t(# steps)`):
+print(`which describes the number of lattice paths`):
+print(`below or meeting the line with slope rise/run, ending on the line.`):
+print(`it attempts to keep the number of varaibles low`):
+print(`For example, SlopeToVarsEQ(1,1,t,D) will return`):
+print(`D^2*t^2+1-D ,giving an expression equal to zero`):
+print(`which is the functional equation for Catalan which counts as desired`):
+
+elif(args[1]=ApproxCoeff) then
+print(`returns the value c so that c/n is the fraction of paths that`):
+print(`go to nth lattic point on line and stay on one side`):
+print(`this appears to have a limit as n->infty`):
+
+elif(args[1]=ApproxExp) then
+print(`approximates the value of c for which`):
+print(`the fraction of all paths to the nth lattice points that are good`):
+print(`grows like n^c`):
+print(`It is well known that for slopepoint = [1,1,1], we have 3D Catalan`):
+print(`so, it should return something near -3`):
+print(`n0 and n1 give lower and upper bounds on n used to do approximation`): 
+
+elif(args[1]=NumWinningk) then
+print(`gives the number of lattice paths of length n so that there are`):
+print(`k steps where both that and the previous step are`):
+print(`on or above the line y= rise/run x`):
+print(`if you want the number ending at a particular target, add \`Help\``):
+print(`to the function and replace n with targetx,targety`):
+print(`if instead k steps on or above, add \`2\` to the function name`):
+print(`for example seq(seq( NumWinningk(1,1,2*n,2*k),k=1..50),n=1..50)`):
+print(`allows you to verify Adersen's arcsine result for n,k<50 as it goves`):
+print(`seq(seq(binomial(2*n-2*k,n-k)*binomial(2*k,k),k=1..50),n=1..50)`):
+
+fi:
+
+end:
+
+
+
+NuPaths:=proc(run,rise,targetx,targety)
+option remember:
+if (targetx=0) then
+  if (targety=0) then
+    RETURN(1):
+  else
+    RETURN(0):
+  fi:
+fi:
+if ((targety/targetx > rise/run) or (targety<0)) then
+  return 0:
+fi:
+NuPaths(run,rise,targetx-1,targety)+NuPaths(run,rise,targetx,targety-1):
+end:
+
+NuPathsND:=proc(slopepoint, targetpoint) local i,n:
+option remember:
+n:= nops(targetpoint):
+if ({seq(targetpoint[i],i=1..n)} = {0}) then
+    RETURN(1):
+fi:
+if (min({seq(targetpoint[i],i=1..n)})<0) then
+    RETURN(0):
+fi:
+if (min({seq(slopepoint[i]*targetpoint[i] -
+     slopepoint[i+1]*targetpoint[i+1],i=1..n-1)})<0) then
+  RETURN(0):
+fi:
+add(
+NuPathsND(slopepoint,[op(1..i-1,targetpoint),
+	targetpoint[i]-1,op(i+1..nops(targetpoint),
+	targetpoint)])
+,i=1..n):
+end:
+
+SlopeToVarsEQ:=proc(run,rise,t,D) local L,R,out:
+L:=L:
+R:=R:
+out:=SlopeToVarsEQHelper(run,rise,t,D,L,R):
+#print(out):
+eliminate(out[2],out[1] minus {D})[2][1]:
+end:
+
+SlopeToVarsEQHelper:=proc(run,rise,t,D,L,R) local Eqs,i,j,Vars:
+Eqs:={D=1+add(L[i]*R[i],i=1..min(run,rise))}
+	union {seq(L[i] = add(L[j]*R[j-i],j=i+1..min(run,rise+i)),i=1..run-1)}
+	union {L[run] =t*D}
+	union {seq(R[i] = add(L[j]*R[j+i],j=1..min(run,rise-i)),i=1..rise-1)}
+	union {R[rise] =t*D}:
+Vars:={D}union{seq(L[i],i=1..run)} union {seq(R[j],j=1..rise)}:
+Vars,EqsToZeroVal(Eqs):
+end:
+
+SlopeToVarsEQFF:=proc(run,rise,t,D) local L,R,out:
+L:=L:
+R:=R:
+out:=SlopeToVarsEQHelperFF(run,rise,t,D,L,R):
+print(out);
+eliminate(out[2],out[1] minus {D})[2][1]:
+end:
+
+SlopeToVarsEQHelperFF:=proc(run,rise,t,D,L,R) local Eqs,i,j,Vars:
+Eqs:={D=1+add(L[i]*R[i],i=1..min(run,rise))}
+	union {seq(L[i] = add(L[j]*R[j-i],j=i+1..min(run,rise+i)),i=1..run-1)}
+	union {L[run] =t}
+	union {seq(R[i] = add(L[j]*R[j+i],j=1..min(run,rise-i)),i=1..rise-1)}
+	union {R[rise] =t}:
+Vars:={D}union{seq(L[i],i=1..run)} union {seq(R[j],j=1..rise)}:
+Vars,EqsToZeroVal(Eqs):
+end:
+
+#little helper function
+EqsToZeroVal:=proc(S) local eq:
+[seq(rhs(eq)-lhs(eq),eq in S)]:
+end:
+
+EQFP:=proc(Var,Eq,highestPower,x) local OldSol,Sol:
+OldSol:=NULL:
+Sol:=1:
+while(Sol<>OldSol) do
+OldSol:=Sol:
+Sol:=normal(convert(taylor(subs(Var=Sol,Eq),x,highestPower+1),polynom)):
+#print(Sol):
+od:
+Sol:
+end:
+
+MEQFP:=proc(Vars,Eqs,highestPower,x) local OldSol,var,var2,Sol:
+OldSol:=NULL:
+for var in Vars do
+Sol[var]:=var:
+od:
+while(not verify(Sol,OldSol,table)) do
+	OldSol:=copy(Sol):
+	for var in Vars do
+	Sol[var]:= subs(subs({seq(var2=Sol[var2],var2 in Vars)},Eqs),Sol[var]):
+	Sol[var]:= normal(convert(taylor(Sol[var],x,highestPower+1),polynom)):
+	od:
+od:
+RETURN({seq(var = Sol[var],var in Vars)}):
+end:
+
+Grossman:=proc(a,b,n) local Parts,i,s,part:
+Parts:=Partition(n):
+s:=0:
+for part in Parts do
+s:=s+mul(
+(binomial(i*(a+b),i*a)/(i*(a+b)))^(part[i])/(part[i]!)
+,i=1..nops(part)):
+od:
+s:
+end:
+
+GrossmanWeak:=proc(a,b,n,k) local Parts,i,s,part:
+Parts:=Partition(n):
+s:=0:
+for part in Parts do
+if(k<nops(part)+1) then
+s:=s+mul(
+(binomial(i*(a+b),i*a)/(i*(a+b)))^(part[i])/(part[i]!)
+,i=1..nops(part)):
+fi:
+od:
+s:
+end:
+
+GrossmanWeak2:=proc(a,b,n,k) local Parts,i,s,part:
+Parts:=Partition(n):
+s:=0:
+for part in Parts do
+if(convert(part,`+`)<k) then
+s:=s+mul(
+(binomial(i*(a+b),i*a)/(i*(a+b)))^(part[i])/(part[i]!)
+,i=1..nops(part)):
+fi:
+od:
+s:
+end:
+
+Partition:=proc(n) local i:
+{seq(op(map(x->[op(1..nops(x)-1,x),x[nops(x)]+1],
+PartitionHelp(n-i,i))),i=1..n)}:
+end:
+
+PartitionHelp:=proc(n,largest) local Parts,i:
+if(largest=0) then
+  if n=0 then
+    RETURN({[]}):
+  else
+    RETURN({}):
+  fi:
+fi:
+Parts:={}:
+for i from 0 to floor(n/largest) do
+  Parts:= Parts union map(part->[op(part),i],
+PartitionHelp(n-i*largest,largest-1)):
+od:
+Parts
+end:
+
+ApproxCoeff:=proc(slopex,slopey,n)
+if(gcd(slopex,slopey)<>1) then
+ApproxCoeff(slopex/gcd(slopex,slopey),slopey/gcd(slopex,slopey),n):
+else
+n*NuPaths(slopex,slopey,slopex*n,slopey*n)/binomial((slopex+slopey)*n,slopex*n):#*gcd(slopex,slopey):
+fi:
+end:
+
+ApproxCoeff2:=proc(slopex,slopey,n) local m:
+if(gcd(slopex,slopey)<>1) then
+ApproxCoeff2(slopex/gcd(slopex,slopey),slopey/gcd(slopex,slopey),n):
+else
+coeff(Statistics[Fit](a+b/m+c/m^2+d/m^3+e/m^4,[seq(p,p=5..n)],[seq(p*NuPaths(slopex,slopey,slopex*p,slopey*p)/binomial((slopex+slopey)*p,slopex*p),p=5..n)],m),m,0):
+fi:
+end:
+
+ApproxExpND:=proc(slopepoint,n0,n1) local i,j,n:
+[seq(NuPathsND(slopepoint,[seq(mul(i,i in slopepoint)/j*n,j in slopepoint)])/multinomial(convert([seq(mul(i,i in slopepoint)/j*n,j in slopepoint)],`+`),seq(mul(i,i in slopepoint)/j*n,j in slopepoint)),n=n0..n1)]:
+
+
+
+end:
+
+
+
+
+##########
+#Copied work
+#EmpAsy(L,n0,n): Empirical asympototics of a sequence that converges to a constant in terms of 1/n.
+#Inputs a list of numbers L of size k, say, and  a positive integer n0, where the L=[f(n0),..., f(n0+k-1)]
+#returns an expression of the form a0+a1/n+..a[k-1]/n^(k-1), let's call it g(n) such that 
+#f(n)=g(n) for n=n0..n0+k01. Try
+#EmpAsy([seq(4+5/i+7/i^2,i=1000..1002)],1000,n);
+EmpAsy:=proc(L,n0,n) local k,var,eq,a,i,g:
+k:=nops(L):
+var:={seq(a[i],i=0..k-1)}:
+g:=add(a[i]/n^i,i=0..k-1):
+eq:={seq(subs(n=n0+i-1,g)-L[i],i=1..k)}:
+var:=solve(eq,var):
+subs(var,g):
+end:
+
+###Zinn
+sn:=proc(resh,n1):
+-1/log(op(n1+1,resh)*op(n1-1,resh)/op(n1,resh)^2):
+end:
+ 
+#Zinn(resh): Zinn-Justin's method to estimate
+#the C,mu, and theta such that
+#resh[i] is appx. Const*mu^i*i^theta
+#For example, try:
+#Zinn([seq(5*i*2^i,i=1..30)]);
+Zinn:=proc(resh)
+local s1,s2,theta,mu,n1,i:
+if nops({seq(sign(resh[i]),i=1..nops(resh))})<>1 then
+ RETURN(FAIL):
+fi:
+
+n1:=nops(resh)-1:
+s1:=sn(resh,n1):
+s2:=sn(resh,n1-1):
+theta:=evalf(2*(s1+s2)/(s1-s2)^2):
+mu:=evalf(sqrt(op(n1+1,resh)/op(n1-1,resh))*exp(-(s1+s2)/((s1-s2)*s1))):
+[theta,mu]:
+end:
+###
+
+#returns the number of digits of each number (<1) which agree
+numEqual:=proc(n1,n2) local amount,num1,num2:
+num1:=n1:
+num2:=n2:
+amount:=-1:
+while(floor(num1/10)<>num1/10) and (floor(num1) = floor(num2)) do num1:=num1*10:num2:=num2*10:amount:=amount+1: od:
+amount:
+end:
+

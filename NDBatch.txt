@@ -1,0 +1,19 @@
+read `RSP.txt`;
+read `Zinn.txt`;
+with(combinat):
+maxN:=30:
+a:=1:b:=1:c:=1:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=2:b:=1:c:=1:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=1:b:=2:c:=1:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=2:b:=2:c:=1:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=2:b:=1:c:=2:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=3:b:=1:c:=1:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=1:b:=3:c:=1:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=3:b:=3:c:=1:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=3:b:=1:c:=3:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=3:b:=2:c:=1:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=2:b:=3:c:=1:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=2:b:=3:c:=2:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=3:b:=2:c:=3:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+a:=3:b:=2:c:=2:L[a][b][c]:=seq(NuPathsND([a,b,c],[b*c*i,a*c*i,a*b*i]),i=1..maxN);
+

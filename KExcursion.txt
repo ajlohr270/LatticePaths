@@ -1,0 +1,320 @@
+with(combinat):
+Help:=proc()
+if args=NULL then
+print(`AllPartsNotS(n,S)`):
+print(`KtoFormula(a,k,N)`):
+print(`PartToFormula(a,lambda,x)`):
+print(`PartToSum(a,lambda,N)`):
+print(`NumWinningk(run,rise,n,k)`):
+print(`NumWinningkGF(run,rise,n,k)`):
+
+elif (args[1]=KtoFormula) then
+print(`gives a formula for all paths of length (a+1)*N with k excursions above the line of slope 1/a`):
+
+elif (args[1]=AllPartsNotS) then
+print(`gives all the partitions of n with no parts contained in S`):
+elif (args[1]=PartToSum) then
+print(`given a partition of all of the excursions, gives the total number of paths following that partition`):
+
+elif (args[1]=PartToFormula) then
+print(`gives the expression that must be summed over to get the number of paths following the given partition of excursions`):
+print(`x[i] gives the index of the i'th run of steps above the line`):
+
+elif (args[1]=PartToSum) then
+
+elif(args[1]=NumWinningk) or (args[1]=NumWinningkGF) then
+print(`gives the number of lattice paths of length n so that there are`):
+print(`k steps that land on or above the line y= rise/run x`):
+print(`if you want the number ending at a particular target, add \`Help\``):
+print(`to the function and replace n with targetx,targety`):
+print(`if instead k steps on or above, add \`2\` to the end of the function name`):
+print(`for example seq(seq( NumWinningk(1,1,2*n,2*k),k=1..50),n=1..50)`):
+print(`allows you to verify Adersen's arcsine result for n,k<50 as it gives`):
+print(`seq(seq(binomial(2*n-2*k,n-k)*binomial(2*k,k),k=1..50),n=1..50)`):
+print(`To get output as a generating function in x, replace k with x and replace \`k\` with`):
+print(`\`GF\` to the name of the function (before a potential \`Help\` or \`2\` `):
+else
+print(`That function name is unrecognized, perhaps it is a minor helper function`):
+print(`or a modified version of another one that has expanded help`):
+print(`run \`Help()\` to see a list of functions that have expanded help`):
+fi:
+end:
+
+
+#returns the number of paths that are of length n that are not loosing
+# at k steps along the way
+NumWinningk:=proc(run,rise,n,k) option remember: local i:
+add(NumWinningkHelp(run,rise,n-i,i,k),i=0..n):
+end:
+
+#returns the number of paths that are of length n that are not loosing
+# at k steps along the way
+NumWinningk2:=proc(run,rise,n,k) option remember: local i:
+add(NumWinningkHelp2(run,rise,n-i,i,k),i=0..n):
+end:
+
+NumWinningkHelp:=proc(run,rise,targetx,targety,k) option remember: local ret:
+if((k<0) or (targetx<0) or (targety<0)) then RETURN(0): fi:
+
+if((k=0) and (targetx=0) and (targety=0)) then RETURN(1): fi:
+
+if(targety*run > targetx*rise) then
+  ret:=NumWinningkHelp(run,rise,targetx-1,targety,k-1)+NumWinningkHelp(run,rise,targetx,targety-1,k-1):
+else
+  ret:=NumWinningkHelp(run,rise,targetx-1,targety,k)+NumWinningkHelp(run,rise,targetx,targety-1,k):
+fi:
+ret:
+end:
+
+NumWinningkHelp2:=proc(run,rise,targetx,targety,k) option remember: local ret,foo:
+if((k<0) or (targetx<0) or (targety<0)) then RETURN(0): fi:
+
+if((k=0) and (targetx=0) and (targety=0)) then RETURN(1): fi:
+
+foo:=targety*run -targetx*rise:
+
+ret:=0:
+if(foo>=0) then
+  ret:=NumWinningkHelp2(run,rise,targetx-1,targety,k-1):
+  if(foo>=run) then
+    ret:=ret+NumWinningkHelp2(run,rise,targetx,targety-1,k-1):
+  else
+    ret:=ret+NumWinningkHelp2(run,rise,targetx,targety-1,k):
+  fi:
+else
+  ret:=NumWinningkHelp2(run,rise,targetx-1,targety,k)+NumWinningkHelp2(run,rise,targetx,targety-1,k):
+fi:
+
+ret:
+end:
+
+NumWinningGF:=proc(run,rise,n,x) local i:
+normal(add(NumWinningGFHelp(run,rise,i,n-i,x),i=0..n)):
+end:
+
+NumWinningGFHelp:=proc(run,rise,targetx,targety,x) option remember:
+if((targetx<0) or(targety<0)) then RETURN(0):fi:
+if(targetx=0) and (targety=0) then RETURN(1):fi:
+if(targetx*rise>targety*run)
+then
+normal(x*(NumWinningGFHelp(run,rise,targetx-1,targety,x)*run
+	 +NumWinningGFHelp(run,rise,targetx,targety-1,x)*rise)):#/(run+rise)):
+else
+normal( (NumWinningGFHelp(run,rise,targetx-1,targety,x)*run
+	+NumWinningGFHelp(run,rise,targetx,targety-1,x)*rise)):#/(run+rise)):
+fi:
+end:
+
+NumWinningGF2:=proc(run,rise,n,x) local i:
+normal(add(NumWinningGFHelp2(run,rise,i,n-i,x),i=0..n)):
+end:
+
+NumWinningGFHelp2:=proc(run,rise,targetx,targety,x) local foo,ret:
+option remember:
+if((targetx<0) or(targety<0)) then RETURN(0):fi:
+if(targetx=0) and (targety=0) then RETURN(1):fi:
+
+foo:=targety*run -targetx*rise:
+
+ret:=0:
+if(foo>=0) then
+  ret:=x*NumWinningGFHelp2(run,rise,targetx-1,targety,x)*run:
+  if(foo>=run) then
+    ret:=ret+x*NumWinningGFHelp2(run,rise,targetx,targety-1,x)*rise:
+  else
+    ret:=ret+NumWinningGFHelp2(run,rise,targetx,targety-1,x)*rise:
+  fi:
+else
+  ret:=NumWinningGFHelp2(run,rise,targetx-1,targety,x)*run+NumWinningGFHelp2(run,rise,targetx,targety-1,x)*rise:
+fi:
+normal(ret):#/(run+rise)):
+end:
+
+#for slope 1, gives the summation formula for given partition of the excursions above the line
+PartToFormula11:=proc(lambda,x) local offset2:
+if(lambda=[]) then RETURN(1): fi:
+if(nops(lambda)=1) then
+1/(x[1]+1)*binomial(2*x[1],x[1]):
+else:
+offset2:=floor((lambda[2]+1)/2):
+
+PartToFormula11(lambda[2..nops(lambda)],x)
+*(1/(x[nops(lambda)]-x[nops(lambda)-1]-offset2+1))
+*binomial(2*(x[nops(lambda)]-x[nops(lambda)-1]-offset2)
+	,x[nops(lambda)]-x[nops(lambda)-1]-offset2):
+fi:
+end:
+
+PartToSum11:=proc(lambda,N) local formula,x:
+x:=x:
+formula:=PartToFormula11([1,op(lambda)],x):
+subs(x[nops(lambda)+1]=N,PartToSum11Help(lambda,x,formula)):
+end:
+
+PartToSum11Help:=proc(lambda,x,formula) local i:
+if(lambda=[]) then RETURN(formula): fi:
+SumTools[Hypergeometric][DefiniteSum](PartToSum11Help(lambda[2..nops(lambda)],x,formula),
+x[nops(lambda)+1],
+x[nops(lambda)],
+add(floor((lambda[i]+1)/2),i=2..nops(lambda))
+	..x[nops(lambda)+1]-floor((lambda[1]+1)/2)):
+end:
+
+AllPartsNotS:=proc(n,S) local k,Parts:
+Parts:={}:
+for k from 1 to n do
+	if not(k in S) then
+		Parts:=Parts union AllPartsNotSHelp(n,S,k):
+	fi: 
+od:
+Parts:
+end:
+
+AllPartsNotSHelp:=proc(n,S,k) local i,Parts:
+if(n<0) then RETURN({}): fi:
+if(n=0) then RETURN({[]}): fi:
+Parts:={}:
+for i from 1 to k do
+if not(i in S) then
+Parts:=Parts union map(l->[k,op(l)],AllPartsNotSHelp(n-k,S,i)):
+fi:
+od:
+Parts:
+end:
+
+AllCompsNotS:=proc(n,S) local k,Parts:
+if(n<0) then RETURN({}): fi:
+if(n=0) then RETURN({[]}): fi:
+Parts:={}:
+for k from 1 to n do
+if not(k in S) then
+Parts:=Parts union map(l->[k,op(l)],AllCompsNotS(n-k,S)):
+fi:
+od:
+Parts:
+end:
+
+KtoFormula11:=proc(k,N) local part,Parts,piece,i:
+Parts:=AllPartsNotS(k,{seq(2*i,i=1..floor(k/2))}):
+simplify(add(PartToSum11(part,N)
+*mul(1/((piece-1)/2+1)*binomial(piece-1,(piece-1)/2),piece in part)
+*nops(permute(part))
+,part in Parts)):
+end:
+
+PartToFormula:=proc(a,lambda,x) local offset2:
+if(lambda=[]) then RETURN(1): fi:
+if(nops(lambda)=1) then
+FussCatalan(x[1],a+1,a+1-(lambda[1])mod (a+1)):
+else:
+offset2:=floor((lambda[2]+a)/(a+1)):
+PartToFormula(a,lambda[2..nops(lambda)],x)
+#*(1/((x[nops(lambda)]-x[nops(lambda)-1]-offset2)+1))
+#*binomial(2*(x[nops(lambda)]-x[nops(lambda)-1]-offset2)
+#	,x[nops(lambda)]-x[nops(lambda)-1]-offset2):
+*FussCatalan(x[nops(lambda)]-x[nops(lambda)-1]-offset2,a+1,a+1-(lambda[1])mod (a+1)):
+fi:
+end:
+
+FussCatalan:=proc(n,p,r)
+r/(p*n+r)*binomial(n*p+r,n):
+end:
+
+PartToSum:=proc(a,lambda,N) local formula,x:
+x:=x:
+formula:=PartToFormula(a,[a,op(lambda)],x):
+subs(x[nops(lambda)+1]=N,PartToSumHelp(a,lambda,x,formula)):
+end:
+
+PartToSumHelp:=proc(a,lambda,x,formula)
+if(lambda=[]) then RETURN(formula): fi:
+SumTools[Hypergeometric][DefiniteSum]
+(PartToSumHelp(a,lambda[2..nops(lambda)],x,formula),
+x[nops(lambda)+1],
+x[nops(lambda)],
+0#add(floor((lambda[i]+a)/(a+1)),i=2..nops(lambda))
+	..x[nops(lambda)+1]-floor((lambda[1]+a)/(a+1))):
+end:
+
+AllPartsNotS:=proc(n,S) local k,Parts:
+Parts:={}:
+for k from 1 to n do
+	if not(k in S) then
+		Parts:=Parts union AllPartsNotSHelp(n,S,k):
+	fi: 
+od:
+Parts:
+end:
+
+NuPathsStrictBelow:=proc(run,rise,targetx,targety)
+option remember:
+if (targetx=0) then
+  if (targety=0) then
+    RETURN(1):
+  else
+    RETURN(0):
+  fi:
+fi:
+if ((targety/targetx >= rise/run) or (targety<0)) then
+  return 0:
+fi:
+NuPathsStrictBelow(run,rise,targetx-1,targety)+NuPathsStrictBelow(run,rise,targetx,targety-1):
+end:
+
+KtoFormula:=proc(a,k,N) local part,Parts,piece,i:
+Parts:=AllPartsNotS(k,{seq((a+1)*i,i=1..floor(k/(a+1)))}):
+simplify(add(PartToSum(a,part,N)
+*mul(NuPathsStrictBelow(a,1,floor(piece*(a/(a+1))),floor(piece*(1/(a+1)))-1),piece in part)
+*nops(permute(part))
+,part in Parts)):
+end:
+
+Everyk:=proc(L,k,o):
+[seq(L[i*k+o+1],i=0..floor((nops(L)-o-1)/k))]:
+end:
+
+plotList:=proc(L):
+plot([seq(i,i=0..nops(L)-1)],L);
+end:
+
+AvFC:=proc(a,b,n) local Poly:
+Poly:=NumWinningGFHelp2(a,b,a*n,b*n,x):
+evalf(subs(x=1,x*diff(Poly,x)/Poly));
+end:
+
+StDevFC:=proc(a,b,n) local Poly,PolyAM:
+Poly:=NumWinningGFHelp2(a,b,a*n,b*n,x):
+PolyAM:=Poly/x^AvFC(a,b,n):
+evalf(sqrt(subs(x=1,x*diff(x*diff(PolyAM,x),x)/Poly)));
+end:
+
+AvAS:=proc(a,b,n) local Poly:
+Poly:=NumWinningGF2(a,b,n,x):
+evalf(subs(x=1,x*diff(Poly,x)/Poly));
+end:
+
+StDevAS:=proc(a,b,n) local Poly,PolyAM:
+Poly:=NumWinningGF2(a,b,n,x):
+PolyAM:=Poly/x^AvAS(a,b,n):
+evalf(sqrt(subs(x=1,x*diff(x*diff(PolyAM,x),x)/Poly)));
+end:
+
+AlphaFC:=proc(a,b,n,i) local Poly:
+Poly:=NumWinningGFHelp2(a,b,a*n,b*n,x):
+subs(x=1,NMoment(Poly,i)/Poly)/StDevFC(a,b,n)^i:
+end:
+
+AlphaAS:=proc(a,b,n,i) local Poly:
+Poly:=NumWinningGF2(a,b,n,x):
+subs(x=1,NMoment(Poly,i)/Poly)/StDevAS(a,b,n)^i:
+end:
+
+NMoment:=proc(Poly,n):
+if(n=1) then
+x*diff(Poly,x):
+else
+x*diff(NMoment(Poly,n-1),x):
+fi:
+end:
+
+

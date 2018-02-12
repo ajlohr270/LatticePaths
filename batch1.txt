@@ -1,0 +1,4 @@
+#batch job 1
+read(`RSP.txt`):
+factor(SlopeToVarsEQ(3,7,t,D));
+

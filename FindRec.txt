@@ -1,0 +1,673 @@
+######################################################################
+## FindRec: Save this file as FindRec. To use it, stay in the        #
+## same directory, get into Maple (by typing: maple <Enter> )        #
+## and then type:  read FindRec: <Enter>                             #
+## Then follow the instructions given there.                         #
+##                                                                   #
+## Written by Doron Zeilberger, Rutgers University ,                 #
+##  zeilberg@math.rutgers.edu.                                       # 
+######################################################################
+
+with(SolveTools):
+
+print(`This is FindRec, A Maple package`):
+print(`for Dr. Z's Math 640 (Spring 2008) class `):
+print(`It guesses recurrence equations for discrete functions of one variable`):
+print():
+print(`The most current version is available on WWW at:`):
+print(` http://www.math.rutgers.edu/~zeilberg/EM08/FindRec .`):
+print(`Please report all bugs to: zeilberg at math dot rutgers dot edu .`):
+print():
+print(`For general help, and a list of the MAIN functions,`):
+print(` type "ezra();". For specific help type "ezra(procedure_name);" `):
+print():
+ 
+ 
+
+
+ezra:=proc()
+if args=NULL then
+
+print(` FindRec: A Maple package for empirically guessing ordinary `):
+print(` recurrence`):
+print(`equations satisfied by Discrete Functions of ONE Variable`):
+print():
+print(`For help with a specific procedure, type "ezra(procedure_name);"`):
+print(`Contains procedures:  `):
+print(` Asy, AsyC, findrec, Findrec, SeqFromRec `):
+
+
+
+elif nargs=1 and args[1]=Asy then
+print(`Asy(ope,n,N,K): the asymptotic expansion of solutions `):
+print(`to ope(n,N)f(n)=0,where ope(n,N) is  a recurrence operator`):
+print(`up to the K's term. Note: ope has to be the MINIMAL operator!`):
+print(`For example, try: Asy((n^2+3)*N-(n^2+1),n,N,2);`):
+
+elif nargs=1 and args[1]=AsyC then
+print(`AsyC(ope,n,N,K,Ini,L): the asymptotic expansion `):
+print(`complete with the estimated constant, of solutions `):
+print(`to ope(n,N)f(n)=0, with initial conditions`):
+print(`Ini where ope(n,N) is  a recurrence operator`):
+print(`up to the K's term. The constant is estimated using up to L terms`):
+print(`For example, try`):
+print(`AsyC(N^2-N-1,n,N,1,[1,1],100);`):
+
+elif nargs=1 and args[1]=findrec then
+print(`findrec(f,DEGREE,ORDER,n,N): guesses a recurrence operator annihilating`):
+print(`the sequence f of degree DEGREE and order ORDER.`):
+print(`For example, try: findrec([seq(i,i=1..10)],0,2,n,N);`):
+
+elif nargs=1 and args[1]=Findrec then
+print(`Findrec(f,n,N,MaxC): Given a list f tries to find a linear recurrence equation with`):
+print(`poly coffs. ope(n,N), where n is the discrete variable, and N is the shift operator `):
+print(`of maximum DEGREE+ORDER<=MaxC`):
+print(`e.g. try Findrec([1,1,2,3,5,8,13,21,34,55,89],n,N,2);`):
+
+elif nargs=1 and args[1]=FindrecF then
+print(`FindrecF(f,n,N): Given a function f of a single variable tries to find a linear recurrence equation with`):
+print(`poly coffs. .g. try FindrecF(i->i!,n,N);`):
+
+
+elif nargs=1 and args[1]=SeqFromRec then
+print(`SeqFromRec(ope,n,N,Ini,K): Given the first L-1`):
+print(`terms of the sequence Ini=[f(1), ..., f(L-1)]`):
+print(`satisfied by the recurrence ope(n,N)f(n)=0`):
+print(`extends it to the first K values`):
+print(`For example, try:`):
+print(`SeqFromRec(N-n-1,n,N,[1],10);`):
+
+elif nargs=1 and args[1]=Yafe1 then
+print(`Yafe1(Ope,M,N): Makes Ope nice`):
+print(`For example, try: Yafe1((1/m)*M*N-1,M,N);`):
+
+elif nops([args])=1 and op(1,[args])=Zinn then
+ print(` Zinn's method `):
+ print(`Zinn(IntegerSequence,n): Given an increasing sequence a(n) of positive integers , expressed`):
+ print(`in terms of a list, empirically estimates the crude `):
+ print(` asympt. behavior in the form n^(theta)*mu^n . `):
+
+fi:
+ 
+end:
+
+
+
+
+###Findrec 
+#findrec(f,DEGREE,ORDER,n,N): guesses a recurrence operator annihilating
+#the sequence f of degree DEGREE and order ORDER
+#For example, try: findrec([seq(i,i=1..10)],0,2,n,N);
+findrecVerbose:=proc(f,DEGREE,ORDER,n,N)
+local ope,var,eq,i,j,n0,kv,var1,eq1,mu,a:
+if (1+DEGREE)*(1+ORDER)+3+ORDER>nops(f) then
+ERROR(`Insufficient data for a recurrence of order`,ORDER, `degree`,DEGREE):
+fi:
+ope:=0:
+var:={}:
+ 
+for i from 0 to ORDER do
+ for j from 0 to DEGREE do
+  ope:=ope+a[i,j]*n^j*N^i:
+  var:=var union {a[i,j]}:
+ od:
+od:
+    
+eq:={}:
+ 
+for n0 from 1 to (1+DEGREE)*(1+ORDER)+2 do
+  eq1:=0:
+ 
+  for i from 0 to ORDER do
+     eq1:=eq1+subs(n=n0,coeff(ope,N,i))*op(n0+i,f):
+  od:
+ 
+   eq:= eq union {eq1}:
+od:
+ 
+var1:=solve(eq,var):
+ 
+kv:={}:
+ 
+for i from 1 to nops(var1) do
+ mu:=op(i,var1):
+ 
+if op(1,mu)=op(2,mu) then
+   kv:= kv union {op(1,mu)}:
+ fi:
+ 
+od:
+
+ope:=subs(var1,ope):
+
+if ope=0 then
+  RETURN(FAIL):
+fi:
+
+ope:={seq(coeff(expand(ope),kv[i],1),i=1..nops(kv))} minus {0}:
+
+if nops(ope)>1 then
+print(`There is some slack, there are `, nops(ope)):
+print(ope):
+RETURN(Yafe(ope[1],N)[2]):
+elif nops(ope)=1 then
+RETURN(Yafe(ope[1],N)[2]):
+else
+ RETURN(FAIL):
+fi:
+
+end:
+ 
+#findrec(f,DEGREE,ORDER,n,N): guesses a recurrence operator annihilating
+#the sequence f of degree DEGREE and order ORDER
+#For example, try: findrec([seq(i,i=1..10)],0,2,n,N);
+findrec:=proc(f,DEGREE,ORDER,n,N)
+local ope,var,eq,i,j,n0,kv,var1,eq1,mu,a:
+option remember:
+
+
+if not findrecEx(f,DEGREE,ORDER,ithprime(20)) then
+ RETURN(FAIL):
+fi:
+
+if not findrecEx(f,DEGREE,ORDER,ithprime(40)) then
+ RETURN(FAIL):
+fi:
+
+if not findrecEx(f,DEGREE,ORDER,ithprime(80)) then
+ RETURN(FAIL):
+fi:
+
+
+if (1+DEGREE)*(1+ORDER)+5+ORDER>nops(f) then
+ERROR(`Insufficient data for a recurrence of order`,ORDER, `degree`,DEGREE):
+fi:
+ope:=0:
+var:={}:
+ 
+for i from 0 to ORDER do
+ for j from 0 to DEGREE do
+  ope:=ope+a[i,j]*n^j*N^i:
+  var:=var union {a[i,j]}:
+ od:
+od:
+    
+eq:={}:
+ 
+for n0 from 1 to (1+DEGREE)*(1+ORDER)+4 do
+  eq1:=0:
+ 
+  for i from 0 to ORDER do
+     eq1:=eq1+subs(n=n0,coeff(ope,N,i))*op(n0+i,f):
+  od:
+ 
+   eq:= eq union {eq1}:
+od:
+ 
+var1:=solve(eq,var):
+ 
+kv:={}:
+ 
+for i from 1 to nops(var1) do
+ mu:=op(i,var1):
+ 
+if op(1,mu)=op(2,mu) then
+   kv:= kv union {op(1,mu)}:
+ fi:
+ 
+od:
+
+ope:=subs(var1,ope):
+
+if ope=0 then
+  RETURN(FAIL):
+fi:
+
+ope:={seq(coeff(expand(ope),kv[i],1),i=1..nops(kv))} minus {0}:
+
+if nops(ope)>1 then
+RETURN(Yafe(ope[1],N)[2]):
+elif nops(ope)=1 then
+RETURN(Yafe(ope[1],N)[2]):
+else
+ RETURN(FAIL):
+fi:
+
+end:
+ 
+
+
+Yafe:=proc(ope,N) local i,ope1,coe1,L: 
+if ope=0 then
+ RETURN(1,0):
+fi:
+ope1:=expand(ope):
+L:=degree(ope1,N):
+coe1:=coeff(ope1,N,L):
+ope1:=normal(ope1/coe1):
+ope1:=normal(ope1):
+ope1:=
+convert(
+[seq(factor(coeff(ope1,N,i))*N^i,i=ldegree(ope1,N)..degree(ope1,N))],`+`):
+factor(coe1),ope1:
+end:
+
+
+#Findrec(f,n,N,MaxC): Given a list f tries to find a linear recurrence equation with
+#poly coffs.
+#of maximum DEGREE+ORDER<=MaxC
+#e.g. try Findrec([1,1,2,3,5,8,13,21,34,55,89],n,N,2);
+Findrec:=proc(f,n,N,MaxC)
+local DEGREE, ORDER,ope,L:
+
+for L from 0 to MaxC do
+for ORDER from 1 to L do
+ DEGREE:=L-ORDER:
+if (2+DEGREE)*(1+ORDER)+4>=nops(f) then
+ print(`Insufficient data for degree`, DEGREE, `and order `,ORDER):
+ RETURN(FAIL):
+fi:
+ ope:=findrec([op(1..(2+DEGREE)*(1+ORDER)+4,f)],DEGREE,ORDER,n,N):
+     if ope<>FAIL then
+       RETURN(ope):
+      fi:
+ od:
+od:
+FAIL:
+
+end:
+
+
+
+
+
+ 
+#SeqFromRec(ope,n,N,Ini,K): Given the first L-1
+#terms of the sequence Ini=[f(1), ..., f(L-1)]
+#satisfied by the recurrence ope(n,N)f(n)=0
+#extends it to the first K values
+SeqFromRec:=proc(ope,n,N,Ini,K)
+local ope1,gu,L,n1,j1:
+ope1:=Yafe(ope,N)[2]:
+L:=degree(ope1,N):
+if nops(Ini)<>L then
+ ERROR(`Ini should be of length`, L):
+fi:
+
+ope1:=expand(subs(n=n-L,ope1)/N^L):
+
+gu:=Ini:
+
+for n1 from nops(Ini)+1 to K do
+gu:=[op(gu), -add(gu[nops(gu)+1-j1]*subs(n=n1,coeff(ope1,N,-j1)),
+j1=1..L)]:
+od:
+
+gu:
+
+end:
+ 
+#end Findrec
+
+
+with(linalg):
+
+#findrecEx(f,DEGREE,ORDER,m1): Explores whether thre
+#is a good chance that there is a recurrence of degree DEGREE
+#and order ORDER, using the prime m1
+#For example, try: findrecEx([seq(i,i=1..10)],0,2,n,N,1003);
+findrecEx:=proc(f,DEGREE,ORDER,m1)
+local ope,var,eq,i,j,n0,eq1,a,A1,
+D1,E1,Eq,Var,f1,n,N:
+option remember:
+f1:=f mod m1:
+if (1+DEGREE)*(1+ORDER)+5+ORDER>nops(f) then
+ERROR(`Insufficient data for a recurrence of order`,ORDER, `degree`,DEGREE):
+fi:
+ope:=0:
+var:={}:
+ 
+for i from 0 to ORDER do
+ for j from 0 to DEGREE do
+  ope:=ope+a[i,j]*n^j*N^i:
+  var:=var union {a[i,j]}:
+ od:
+od:
+    
+eq:={}:
+ 
+for n0 from 1 to (1+DEGREE)*(1+ORDER)+4 do
+  eq1:=0:
+ 
+  for i from 0 to ORDER do
+     eq1:=eq1+subs(n=n0,coeff(ope,N,i))*op(n0+i,f1) mod m1:
+  od:
+ 
+   eq:= eq union {eq1}:
+od:
+
+
+Eq:= convert(eq,list):
+Var:= convert(var,list):
+
+
+D1:=nops(Var):
+E1:=nops(Eq):
+if E1<D1 then
+  RETURN(true):
+fi:
+
+A1:=matrix(D1,D1):
+
+for i from 1 to D1-1 do
+for j from 1 to D1 do
+  A1[i,j]:=coeff(Eq[i],Var[j]):
+od:
+od:
+
+for j from 1 to nops(Var) do
+  A1[D1,j]:=coeff(Eq[D1],Var[j]):
+od:
+
+if det(A1) mod m1 <>0  then
+ RETURN(false):
+fi:
+
+if E1-D1>=1 then
+ for j from 1 to nops(Var) do
+  A1[D1,j]:=coeff(Eq[D1+1],Var[j]):
+ od:
+
+if det(A1) mod m1 <>0  then
+ RETURN(false):
+fi:
+fi:
+
+if E1-D1>=2 then
+ for j from 1 to nops(Var) do
+  A1[D1,j]:=coeff(Eq[D1+2],Var[j]):
+ od:
+
+if det(A1) mod m1 <>0  then
+ RETURN(false):
+fi:
+fi:
+
+true:
+
+end:
+
+#findrecK(f,DEGREE,ORDER): Is there a unique recurrence if degree DEGREE and order ORDER
+#the sequence f of degree DEGREE and order ORDER
+#For example, try: findrecK([seq(i,i=1..10)],0,2);
+findrecK:=proc(f,DEGREE,ORDER)
+local ope,var,eq,i,j,n0,kv,var1,eq1,mu,n,N,a:
+option remember:
+if (1+DEGREE)*(1+ORDER)+3+ORDER>nops(f) then
+ERROR(`Insufficient data for a recurrence of order`,ORDER, `degree`,DEGREE):
+fi:
+
+#if not findrecEx(f,DEGREE,ORDER,ithprime(40)) then
+# RETURN(FAIL):
+#fi:
+
+ope:=0:
+var:={}:
+ 
+for i from 0 to ORDER do
+ for j from 0 to DEGREE do
+  ope:=ope+a[i,j]*n^j*N^i:
+  var:=var union {a[i,j]}:
+ od:
+od:
+    
+eq:={}:
+ 
+for n0 from 1 to (1+DEGREE)*(1+ORDER)+2 do
+  eq1:=0:
+ 
+  for i from 0 to ORDER do
+     eq1:=eq1+subs(n=n0,coeff(ope,N,i))*op(n0+i,f):
+  od:
+ 
+   eq:= eq union {eq1}:
+od:
+ 
+var1:=solve(eq,var):
+ 
+kv:={}:
+ 
+for i from 1 to nops(var1) do
+ mu:=op(i,var1):
+ 
+if op(1,mu)=op(2,mu) then
+   kv:= kv union {op(1,mu)}:
+ fi:
+ 
+od:
+
+ope:=subs(var1,ope):
+
+if ope=0 then
+  RETURN(false):
+fi:
+
+ope:={seq(coeff(expand(ope),kv[i],1),i=1..nops(kv))} minus {0}:
+
+if nops(ope)=1 then
+ RETURN(true):
+else
+ RETURN(false):
+fi:
+
+end:
+ 
+ 
+#end Findrec
+
+
+
+####Begin Asymptotics
+#Aope1(ope,n,N): the asymptotics of the difference operator with poly. coeffs. ope(n,N)
+Aope1:=proc(ope,n,N)
+local gu:
+gu:=expand(numer(normal(ope))):
+gu:=coeff(gu,n,degree(gu,n)):
+gu:=expand(gu/coeff(gu,N,degree(gu,N))):
+factor(gu):
+end:
+
+C3:=proc(a,b,c) option remember:
+
+if [a,b,c]=[0,0,0] then
+  RETURN(1):
+fi:
+if a<0 or b<0 or c<0 then
+   RETURN(0):
+fi:
+C3(a-1,b,c)+C3(a,b-1,c)+C3(a,b,c-1)-4*C3(a-1,b-1,c-1):
+end:
+
+#Aluf1(pit): is it positive dominant?
+Aluf1:=proc(pit)
+local aluf,shi,i,makom:
+
+
+shi:=evalf(abs(pit[1])):
+aluf:={evalf(evalc(pit[1]))}:
+makom:={1}:
+
+for i from 2 to nops(pit) do
+
+ if evalf(abs(pit[i]))>evalf(shi) then
+   shi:=abs(evalf(evalc(pit[i]))):
+  aluf:={pit[i]}:
+  makom:={i}:
+ elif evalf(abs(pit[i]))=shi then
+   aluf:=aluf union {evalf(evalc(pit[i]))}:
+   makom:=makom union {i}:
+ fi:
+
+od:
+
+aluf,shi,makom:
+
+end:
+
+
+
+#OneStepAS1(ope1,n,N,alpha,f,S1): Given the partial asymptotic
+#expansion of solutions of ope1(n,N) with exponent alpha
+#extends it by one term
+OneStepAS1:=proc(ope1,n,N,alpha,f,S1)
+local x,f1,L,F,A,mu,i,A1:
+f1:=subs(n=1/x,f):
+L:=degree(f1,x):
+F:=f1+A*x^(L+S1):
+mu:=add(
+subs(n=1/x,coeff(ope1,N,i))*(1+i*x)^alpha*subs(x=x/(1+i*x),F)
+,i=ldegree(ope1,N)..degree(ope1,N)):
+mu:=normal(mu):
+mu:=taylor(mu,x=0,L+11):
+mu:=simplify(mu):
+for i from L+1 to L+9 while coeff(mu,x,i)=0 do od:
+if i=L+10 then
+ RETURN(FAIL):
+fi:
+mu:=coeff(mu,x,i):
+A1:=subs(Linear({mu},{A}),A):
+if A1=0 then
+  RETURN(FAIL):
+fi:
+
+subs({x=1/n,A=A1},F):
+
+end:
+
+
+#OneStepA(ope1,n,N,alpha,f): Given the partial asymptotic
+#expansion of solutions of ope1(n,N) with exponent alpha
+#extends it by one term
+OneStepA:=proc(ope1,n,N,alpha,f)
+local S1:
+for S1 from 1 while OneStepAS1(ope1,n,N,alpha,f,S1)=FAIL do od:
+OneStepAS1(ope1,n,N,alpha,f,S1):
+end:
+
+#Asy(ope,n,N,K): the asymptotic expansion of solutions 
+#to ope(n,N)f(n)=0,where ope(n,N) is  a recurrence operator
+#up to the K's term
+Asy:=proc(ope,n,N,K)
+local gu,pit,lu,makom,alpha,mu,ope1,ku,i,f,x,ka:
+
+gu:=Aope1(ope,n,N):
+if degree(gu,N)=0 then
+   print(`Not of exponential growth, case not implemented`):
+   RETURN(FAIL):
+fi:
+
+if not type(expand(normal(ope/gu)),`+`) then
+ pit:=[solve(gu,N)]:
+ makom:=Aluf1(pit)[3]:
+
+     RETURN(pit[makom[1]]^n*expand((nops(makom)-1)!*binomial(nops(makom)-1+n,nops(makom)-1))):
+fi:
+
+pit:=[solve(gu,N)]:
+makom:=Aluf1(pit)[3]:
+
+if nops(makom)<>1 then
+lu:=evalf(evalc(pit[makom[1]])):
+ if coeff(lu,I,1)>(1/10)^(Digits-2) then
+ print(`Not only that but Dominant roots are complex`):
+ RETURN(FAIL):
+fi:
+
+fi:
+lu:=evalf(evalc(pit[makom[1]])):
+
+if coeff(lu,I,1)>(1/10)^(Digits-2) then
+ print(`Dominant root is complex`):
+ RETURN(FAIL):
+fi:
+
+lu:=pit[makom[1]]:
+
+ope1:=Yafe(subs(N=lu*N,ope),N)[2]:
+
+mu:=add(
+subs(n=1/x,coeff(ope1,N,i))*(1+i*x)^alpha,i=ldegree(ope1,N)..degree(ope1,N)):
+mu:=normal(mu):
+ku:=factor(coeff(taylor(mu,x=0,nops(makom)+1),x,nops(makom))):
+
+ka:=simplify([solve(ku,alpha)]):
+
+alpha:=max(op(ka)):
+
+if normal(subs(N=1,ope1))=0 then
+ RETURN(lu^n*n^alpha):
+fi:
+
+f:=1:
+for i from 1 to K do
+f:=OneStepA(ope1,n,N,alpha,f):
+od:
+
+lu^n*n^alpha*f:
+end:
+
+###EndAsymptotics
+
+
+Zinn:=proc(resh,n)
+local s1,s2,n1,lu1,lu2:
+n1:=nops(resh)-2:
+s1:=sn(resh,n1):
+s2:=sn(resh,n1-1):
+lu1:=evalf(2*(s1+s2)/(s1-s2)^2):
+lu2:=evalf(sqrt(op(n1+1,resh)/op(n1-1,resh))*exp(-(s1+s2)/((s1-s2)*s1))):
+lu2^n*n^(lu1):
+end:
+ 
+ 
+sn:=proc(resh,n):
+-1/log(op(n+1,resh)*op(n-1,resh)/op(n,resh)^2):
+#evalf(%):
+end:
+ 
+
+
+#AsyC(ope,n,N,K,Ini,L): the asymptotic expansion 
+#complete with the estimated constant, of solutions 
+#to ope(n,N)f(n)=0, with initial conditions
+#Ini, where ope(n,N) is  a recurrence operator
+#up to the K's term. The constant is estimated using up to L terms
+#For example, try
+#AsyC(N^2-N-1,n,N,1,[1,1],100);
+AsyC:=proc(ope,n,N,K,Ini,L)
+local lu,gu,C,dig,i:
+Digits:=100:
+
+if nops(Ini)<degree(ope,N)-1 then
+ print(`Not enough initial conditions`):
+ RETURN(FAIL):
+fi:
+
+lu:=Asy(ope,n,N,K):
+gu:=SeqFromRec(ope,n,N,Ini,L):
+
+gu:=[seq(evalf(gu[i]/subs(n=i,lu)),i=1..nops(gu))]:
+
+dig:=-evalf(ln(abs(gu[nops(gu)]-gu[nops(gu)-1]))/ln(10)):
+
+if dig<3 then
+print(`Make the last argument L, bigger`):
+ RETURN(FAIL):
+fi:
+
+C:=evalf(gu[nops(gu)],trunc(dig)-3):
+
+C*lu:
+end:
+
+
